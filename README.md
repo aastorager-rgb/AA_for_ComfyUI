@@ -1,10 +1,4 @@
-Here is the updated documentation, incorporating the line thinning/matching feature, node-specific parameter descriptions, and system requirements. It is provided in both English and Korean without any emojis.
-
----
-
-# English Version
-
-# ComfyUI Shift-JIS Art Generator Nodes (v1.0)
+# ComfyUI Shift-JIS Art Generator Nodes (v1.1)
 
 This project is a custom node set for ComfyUI that analyzes original images to automatically generate high-quality, variable-width Shift-JIS ASCII art, simulating the intricate work of human ASCII artists.
 
@@ -111,11 +105,26 @@ Tracks the detailed 5-step generation process in real-time via the terminal cons
 
 ---
 
+## Changelog
+
+**[v1.1] - Tone-based Hybrid Matching & Pipeline Stabilization**
+
+* **Added Background Tone Application Mode (BG Tone Mode)**: Introduced the ability to analyze the original image's tone and fill empty spaces lacking line-art with characters, in addition to the existing line-art matching. (Mode 1: Full Area Tone, Mode 2: Fill Empty Spaces, Mode 3: Line-art Only)
+* **Dynamic Programming (DP) Based Tone Replacement**: When using Mode 2, an algorithm is applied to calculate the local tone of continuous empty spaces and precisely fill them with the combination of characters that yields the lowest tone error.
+* **Added Global Y Shift Parameter**: Supports matrix shifting to fine-tune the vertical hit point of character placement (-16px to +16px).
+* **Custom CSV Parser & Smart Caching**: Introduced a robust custom parser to prevent parsing errors (ParserError, Out of bounds) typical with Japanese text files. Vastly improved rendering stability by ensuring the tensor cache automatically resets whenever source files (CSV, TXT) are changed.
+
+**[v1.0] - Initial Release (Line-only)**
+
+* **Established Pure Line-art Based Matching Pipeline**: Completed a system that moves beyond simple density mapping, placing characters strictly along the topological trajectories obtained through outline extraction and skeletonization.
+* **Applied 4 Outline Extraction Algorithms** and the Guo-Hall thinning algorithm.
+* **Semantic ROI Mask Support**: Implemented matching logic that relaxes topological penalties for critical areas such as eyes and faces to preserve structural details.
+
 ---
 
-# Korean Version
+---
 
-# ComfyUI Shift-JIS Art Generator Nodes (v1.0)
+# ComfyUI Shift-JIS Art Generator Nodes (v1.1)
 
 이 프로젝트는 ComfyUI 환경에서 원본 이미지를 분석하여 실제 사람이 수작업으로 만든 것과 같은 고품질 가변 폭(Variable-width) Shift-JIS 아스키 아트를 자동으로 생성하는 커스텀 노드 세트입니다.
 
@@ -129,6 +138,7 @@ Tracks the detailed 5-step generation process in real-time via the terminal cons
 * **Python 라이브러리**: `torch`, `numpy`, `opencv-python` (`cv2`), `pandas`, `Pillow` (`PIL`)
 * **ComfyUI Impact Pack** (강력 권장): 얼굴 및 눈 영역을 인식하여 ROI 마스크를 생성하는 데 사용됩니다.
 * **BBox 모델**: `bbox/face_yolov8m.pt` 또는 `bbox/eyes.pt` 등 (Generator 노드의 `opt_roi_mask`에 연결하여 사용)
+
 
 ## 파이프라인 구조
 
@@ -219,3 +229,24 @@ Tracks the detailed 5-step generation process in real-time via the terminal cons
 * `aa_image`: 폰트가 렌더링된 최종 아스키 아트 이미지
 * `aa_text`: 복사하여 다른 곳에 붙여넣을 수 있는 실제 텍스트 문자열
 * `grid_image`: 붉은색 스캔 라인, 인식된 글자 박스, 톤 대체 영역을 시각적으로 보여주는 디버깅용 이미지
+
+요청하신 대로 기존 문서에 추가할 수 있는 **업데이트 내역(Changelog)** 섹션을 작성했습니다. 이모지를 모두 배제하였으며, 공식 문서의 서론(Introduction) 직후나 문서 맨 마지막에 배치하기 좋은 형태입니다.
+
+아래의 마크다운 텍스트를 복사하여 문서에 추가해 주시면 됩니다.
+
+---
+
+## 업데이트 내역 (Changelog)
+
+**[v1.1] - 톤 기반 하이브리드 매칭 및 파이프라인 안정화**
+
+* **배경 톤 애플리케이션 모드 (BG Tone Mode) 파라미터 추가**: 기존의 선화 매칭에 더해, 원본 이미지의 명암(Tone)을 분석하여 선화가 없는 빈 공간을 문자로 채우는 기능을 도입했습니다. (Mode 1: 전체 영역 톤 적용, Mode 2: 빈 공간 치환, Mode 3: 선화 전용)
+* **동적 계획법(DP) 기반 톤 치환**: Mode 2 사용 시, 연속된 공백의 부분 톤(Local Tone)을 계산하여 가장 오차가 적은 문자 조합으로 빈 공간을 정밀하게 채우는 알고리즘을 적용했습니다.
+* **전역 Y축 이동 (Global Y Shift) 파라미터 추가**: 글자 배치 타격점을 위아래로 미세 조정(-16px ~ +16px)할 수 있는 매트릭스 이동 기능을 지원합니다.
+* **커스텀 CSV 파서 및 스마트 캐싱**: 일본어 텍스트 파일 파싱 에러(ParserError, Out of bounds)를 방지하는 안전한 커스텀 파서를 도입하고, 리소스 변경 시 텐서 캐시가 자동으로 초기화되도록 수정하여 렌더링 안정성을 대폭 향상했습니다.
+
+**[v1.0] - 최초 릴리즈 (Line-only)**
+
+* **순수 선화(Line-art) 기반 매칭 파이프라인 구축**: 밀도 매핑을 배제하고, 윤곽선 추출 및 위상수학적 골격화(Skeletonize)를 거친 뼈대 궤적에 문자를 배치하는 시스템을 완성했습니다.
+* **4가지 외곽선 추출 알고리즘** 및 Guo-Hall 세선화 알고리즘 적용.
+* **시맨틱 ROI 마스크 지원**: 눈과 얼굴 등 중요 부위의 위상 페널티를 완화하여 디테일을 보존하는 매칭 로직을 구현했습니다.
