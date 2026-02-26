@@ -184,9 +184,9 @@ class SjisVariableWidthGenerator:
             "roi_tone_weight": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.1}),
             
             "bg_tone_mode": (["1: Full Area Tone", "2: Fill Empty Spaces", "3: Line-art Only"], {"default": "3: Line-art Only"}),
-            "bg_tone_weight": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 10.0, "step": 0.1}),
+            "bg_tone_weight": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 10.0, "step": 0.1}),
             "bg_tone_contrast": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 3.0, "step": 0.1}),
-            "bg_tone_brightness": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.02}),
+            "bg_tone_brightness": ("FLOAT", {"default": 0.3, "min": -1.0, "max": 1.0, "step": 0.01}),
             "char_tone_path": (TXT_FILES, {"default": "char_tone.txt"}),
         },
         "optional": {
@@ -550,13 +550,19 @@ class SjisVariableWidthGenerator:
                 calc = torch.where(g['is_dense'].view(N, 1, 1).bool(), torch.where(is_eye.view(N,1,1).bool() ^ b1.bool(), calc - 99999.0, calc - 70.0), calc)
                 if cw >= 7:
                     if cw >= 13:
-                        calc = torch.where(b1.bool(), calc + 15.0, calc)
+                        calc = torch.where(b1.bool(), calc + 20.0, calc)
                     else:
                         calc = torch.where(b1.bool(), calc + 10.0, calc)                        
                 
                 if bg_mode.startswith("1") and bg_weight > 0:
-                    is_valid_bg = (~b1.bool()) & (t_ov2 > 2.0)
-                    calc = torch.where(is_valid_bg, calc + (t_ov2 * bg_weight), calc)
+                    patch_avg_tone = torch.nn.functional.conv2d(t_tne, ones_k).squeeze(0) / (h * cw)
+                    char_avg_tone = g['inks'].view(N, 1, 1) / (h * cw)
+                    tone_diff = torch.abs(patch_avg_tone - char_avg_tone)
+                    bg_calc = (2.5 * bg_weight) - (tone_diff * 8.0 * bg_weight) + (g['freqs'].view(N,1,1) * 0.5)
+                    is_valid_bg = (~b1.bool()) & (patch_avg_tone > 0.02) & (ov2 == 0)
+                    calc = torch.where(is_valid_bg, bg_calc, calc)
+                    calc = torch.where((~b1.bool()) & (ov2 > 0), calc - (tone_diff * 8.0 * bg_weight), calc)
+                    
                     strict_mask = ((ov2 > 0) | (is_eye.view(N,1,1).bool() & val_s.bool()) | is_valid_bg).bool()
                     calc = torch.where(strict_mask, calc, torch.full_like(calc, -99999.0))
                 else:
